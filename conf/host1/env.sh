@@ -2,3 +2,5 @@ PATH=/usr/local/bin:/home/isucon/.local/ruby/bin:/home/isucon/.local/node/bin:/h
 ISUCONP_DB_USER=isuconp
 ISUCONP_DB_PASSWORD=isuconp
 ISUCONP_DB_NAME=isuconp
+MYSQL_DRIVER_POSTFIX=:logger
+CPU_PROFILE_FILE=/tmp/cpu.pprof

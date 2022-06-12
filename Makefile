@@ -14,8 +14,13 @@ deploy-app:
 	go build -o app
 	ssh ${HOST1} sudo systemctl stop isu-go
 	scp app ${HOST1}:private_isu/webapp/golang/app
+	scp app.sh ${HOST1}:private_isu/webapp/golang/app.sh
 	scp env.sh ${HOST1}:env.sh
 	ssh ${HOST1} sudo systemctl start isu-go
+
+deploy-service:
+	cat isu-go.service | ssh ${HOST1} sudo tee /etc/systemd/system/isu-go.service
+	ssh ${HOST1} sudo systemctl daemon-reload
 
 deploy-conf:
 	cat host1-nginx.conf | ssh ${HOST1} sudo tee /etc/nginx/nginx.conf
@@ -43,6 +48,7 @@ fetch-conf:
 	scp ${HOST1}:private_isu/webapp/golang/go.* ./conf/host1/
 	scp ${HOST1}:env.sh ./conf/host1/
 	scp ${HOST1}:/etc/nginx/nginx.conf ./conf/host1/nginx.conf
+	scp ${HOST1}:/etc/systemd/system/isu-go.service ./conf/host1/isu-go.service
 
 dbdoc:
 	tbls doc mysql://isuconp:isuconp@localhost:3306/isuconp
