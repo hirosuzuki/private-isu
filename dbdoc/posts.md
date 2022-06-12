@@ -13,7 +13,8 @@ CREATE TABLE `posts` (
   `imgdata` mediumblob NOT NULL,
   `body` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `created_at@posts` (`created_at` DESC)
 ) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ```
 
@@ -40,6 +41,7 @@ CREATE TABLE `posts` (
 
 | Name | Definition |
 | ---- | ---------- |
+| created_at@posts | KEY created_at@posts (created_at) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 
 ## Relations

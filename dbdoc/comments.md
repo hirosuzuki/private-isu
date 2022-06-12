@@ -14,7 +14,8 @@ CREATE TABLE `comments` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `post_id@comments` (`post_id`),
-  KEY `post_id-created_at@comments` (`post_id`,`created_at`)
+  KEY `post_id-created_at@comments` (`post_id`,`created_at`),
+  KEY `user_id@comments` (`user_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=[Redacted by tbls] DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ```
 
@@ -42,6 +43,7 @@ CREATE TABLE `comments` (
 | ---- | ---------- |
 | post_id-created_at@comments | KEY post_id-created_at@comments (post_id, created_at) USING BTREE |
 | post_id@comments | KEY post_id@comments (post_id) USING BTREE |
+| user_id@comments | KEY user_id@comments (user_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 
 ## Relations
