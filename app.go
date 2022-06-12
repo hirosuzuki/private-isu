@@ -398,18 +398,78 @@ func getLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+func makePostsWitoutUser(results []Post, csrfToken string, allComments bool) ([]Post, error) {
+	var posts []Post
+
+	for _, p := range results {
+		err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		query := "SELECT c.id, c.post_id, c.user_id, c.comment, c.created_at, u.id, u.account_name, u.passhash, authority, u.del_flg, u.created_at FROM `comments` c LEFT OUTER JOIN users u on u.id = c.user_id WHERE `post_id` = ? ORDER BY c.`created_at` desc"
+		if !allComments {
+			query += " LIMIT 3"
+		}
+		rows, err := db.Queryx(query, p.ID)
+		if err != nil {
+			return nil, err
+		}
+		comments := make([]Comment, 0)
+		for rows.Next() {
+			c := Comment{}
+			err = rows.Scan(&c.ID, &c.PostID, &c.UserID, &c.Comment, &c.CreatedAt, &c.User.ID, &c.User.AccountName, &c.User.Passhash, &c.User.Authority, &c.User.DelFlg, &c.User.CreatedAt)
+			if err != nil {
+				return nil, err
+			}
+			comments = append(comments, c)
+		}
+
+		// reverse
+		for i, j := 0, len(comments)-1; i < j; i, j = i+1, j-1 {
+			comments[i], comments[j] = comments[j], comments[i]
+		}
+
+		p.Comments = comments
+		p.CSRFToken = csrfToken
+
+		posts = append(posts, p)
+
+		if len(posts) >= postsPerPage {
+			break
+		}
+	}
+
+	return posts, nil
+}
+
+func getPostsFast() ([]Post, error) {
+	results := []Post{}
+	rows, err := db.Queryx("SELECT p.id, p.user_id, p.body, p.mime, p.created_at, u.id, u.account_name, u.passhash, u.authority, u.del_flg, u.created_at FROM posts p LEFT OUTER JOIN users u ON u.id = p.user_id WHERE u.del_flg = 0 ORDER BY p.created_at DESC limit 20")
+	if err != nil {
+		return results, err
+	}
+	for rows.Next() {
+		p := Post{}
+		err = rows.Scan(&p.ID, &p.UserID, &p.Body, &p.Mime, &p.CreatedAt, &p.User.ID, &p.User.AccountName, &p.User.Passhash, &p.User.Authority, &p.User.DelFlg, &p.User.CreatedAt)
+		if err != nil {
+			return results, err
+		}
+		results = append(results, p)
+	}
+	return results, nil
+}
+
 func getIndex(w http.ResponseWriter, r *http.Request) {
 	me := getSessionUser(r)
 
-	results := []Post{}
-
-	err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
+	results, err := getPostsFast()
 	if err != nil {
 		log.Print(err)
 		return
 	}
 
-	posts, err := makePosts(results, getCSRFToken(r), false)
+	posts, err := makePostsWitoutUser(results, getCSRFToken(r), false)
 	if err != nil {
 		log.Print(err)
 		return
@@ -573,7 +633,7 @@ func getPostsID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := []Post{}
-	err = db.Select(&results, "SELECT id, user_id, body, created_at FROM `posts` WHERE `id` = ?", pid)
+	err = db.Select(&results, "SELECT id, user_id, mime, body, created_at FROM `posts` WHERE `id` = ?", pid)
 	if err != nil {
 		log.Print(err)
 		return
