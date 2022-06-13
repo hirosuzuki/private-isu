@@ -1,5 +1,5 @@
 HOST0=isucon@52.194.245.236
-HOST1=isucon@18.181.152.249
+HOST1=isucon@13.112.10.209
 TIMEID := $(shell date +%Y%m%d-%H%M%S)
 
 # sudo -u isucon ssh-import-id-gh hirosuzuki
@@ -51,8 +51,10 @@ fetch-conf:
 	scp ${HOST1}:/etc/systemd/system/isu-go.service ./conf/host1/isu-go.service
 
 dbdoc:
-	tbls doc mysql://isuconp:isuconp@localhost:3306/isuconp
+	tbls doc -f mysql://isuconp:isuconp@localhost:3306/isuconp
 
+schemaspy:
+	java -jar schemaspy-6.1.0.jar -dp mysql-connector-java-8.0.29.jar -t mysql -db isuconp -host 127.0.0.1 -port 3306 -u isuconp -p isuconp -o outputDir -s isuconp
 
 pprof:
 	go tool pprof -http="127.0.0.1:8081" logs/latest/cpu-web1.pprof
